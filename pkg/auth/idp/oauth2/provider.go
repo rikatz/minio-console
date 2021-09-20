@@ -122,9 +122,9 @@ var derivedKey = func() []byte {
 // NewOauth2ProviderClient instantiates a new oauth2 client using the configured credentials
 // it returns a *Provider object that contains the necessary configuration to initiate an
 // oauth2 authentication flow
-func NewOauth2ProviderClient(ctx context.Context, scopes []string, httpClient *http.Client) (*Provider, error) {
+func NewOauth2ProviderClient(scopes []string, httpClient *http.Client) (*Provider, error) {
 
-	ddoc, err := parseDiscoveryDoc(GetIDPURL())
+	ddoc, err := parseDiscoveryDoc(oidcURL, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -263,14 +263,14 @@ func validateOauth2State(state string) error {
 
 // parseDiscoveryDoc parses a discovery doc from an OAuth provider
 // into a DiscoveryDoc struct that have the correct endpoints
-func parseDiscoveryDoc(ustr string) (DiscoveryDoc, error) {
+func parseDiscoveryDoc(ustr string, httpClient *http.Client) (DiscoveryDoc, error) {
 	d := DiscoveryDoc{}
 	req, err := http.NewRequest(http.MethodGet, ustr, nil)
 	if err != nil {
 		return d, err
 	}
 	clnt := http.Client{
-		Transport: GetConsoleHTTPClient().Transport,
+		Transport: httpClient.Transport,
 	}
 	resp, err := clnt.Do(req)
 	if err != nil {

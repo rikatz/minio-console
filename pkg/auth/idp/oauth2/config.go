@@ -19,6 +19,8 @@
 package oauth2
 
 import (
+	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/minio/console/pkg/auth/utils"
@@ -30,8 +32,19 @@ func GetSTSEndpoint() string {
 }
 
 func GetIDPURL() string {
-	return env.Get(ConsoleIDPURL, "")
+	openIDConfigPath := "/.well-known/openid-configuration"
+	idpURL := env.Get(ConsoleIDPURL, "")
+	u, err := url.Parse(idpURL)
+	if err != nil {
+		panic(err)
+	}
+	if u.Path != openIDConfigPath {
+		return fmt.Sprintf("%s://%s%s", u.Scheme, u.Hostname(), openIDConfigPath)
+	}
+	return u.String()
 }
+
+var oidcURL = GetIDPURL()
 
 func GetIDPClientID() string {
 	return env.Get(ConsoleIDPClientID, "")
@@ -51,7 +64,7 @@ func GetIDPCallbackURL() string {
 }
 
 func IsIDPEnabled() bool {
-	return GetIDPURL() != "" &&
+	return oidcURL != "" &&
 		GetIDPClientID() != "" &&
 		GetIDPCallbackURL() != ""
 }
